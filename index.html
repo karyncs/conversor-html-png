@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tool HTML to PNG</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tool HTML → PNG</title>
   <!-- html2canvas no host -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
@@ -14,8 +14,10 @@
       padding: 20px;
     }
     textarea {
-      width: 100%; height: 200px;
-      font-family: monospace; font-size: 14px;
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+      font-size: 14px;
       margin-bottom: 10px;
     }
     #preview-container {
@@ -26,19 +28,27 @@
       position: relative;
     }
     .button {
-      background: #007bff; color: #fff;
-      border: none; padding: 10px 20px;
-      border-radius: 4px; cursor: pointer;
-      transition: opacity .2s;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: opacity 0.2s;
     }
     .button:disabled {
-      opacity: 0.5; cursor: not-allowed;
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
   <h1>Tool: HTML → PNG</h1>
-  <textarea id="html-input" placeholder="Cole aqui seu HTML completo…"></textarea>
+  <textarea
+    id="html-input"
+    placeholder="Paste here your HTML // Cole aqui seu HTML completo (incluindo todo o <head> e <body>)…"
+  ></textarea>
+
   <div id="preview-container"></div>
   <button id="btn-gerar-png" class="button" disabled>Gerar PNG</button>
 
@@ -49,24 +59,24 @@
 
     function updatePreview() {
       const html = htmlInput.value;
-      previewContainer.innerHTML = '';      // limpa container
-      btn.disabled = true;                  // desabilita botão
+      // limpa e impede novo clique até reload do iframe
+      previewContainer.innerHTML = '';
+      btn.disabled = true;
 
       if (!html.trim()) return;
 
-      // Escapa </script> e aspas
-      const escaped = html
-        .replace(/<\/script>/gi, '<\\/script>')
-        .replace(/"/g, '&quot;');
+      // serializa TODO o HTML (com head+body) para srcdoc
+      const srcdoc = JSON.stringify(html);
 
-      // Insere iframe srcdoc
       previewContainer.innerHTML = `
-        <iframe id="previewFrame"
-                style="width:100%; height:100%; border:none"
-                srcdoc="${escaped}">
-        </iframe>`;
+        <iframe
+          id="previewFrame"
+          style="width:100%; height:100%; border:none"
+          srcdoc=${srcdoc}>
+        </iframe>
+      `;
 
-      // Ao carregar o iframe, libera o botão
+      // só habilita o botão quando tudo (CSS, Chart.js, etc.) tiver carregado
       const iframe = previewContainer.querySelector('iframe');
       iframe.addEventListener('load', () => {
         btn.disabled = false;
@@ -80,7 +90,7 @@
       if (!iframe) return;
       const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-      // Se existir Chart.js dentro do iframe, desativa animações
+      // desliga animações do Chart.js se estiver lá dentro
       if (doc.defaultView.Chart) {
         doc.defaultView.Chart.defaults.animation = false;
       }
@@ -96,7 +106,7 @@
         link.href = canvas.toDataURL('image/png');
         link.click();
 
-        // Restaura animações
+        // restaura animações
         if (doc.defaultView.Chart) {
           doc.defaultView.Chart.defaults.animation = true;
         }
