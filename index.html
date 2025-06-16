@@ -30,7 +30,9 @@
       margin: 0 auto 10px;
       position: relative;
       background: white;
+      overflow: hidden;
     }
+    /* Spinner como overlay */
     .loading-spinner {
       position: absolute;
       top: 50%; left: 50%;
@@ -40,9 +42,16 @@
       border-top: 4px solid #007bff;
       border-radius: 50%;
       animation: spin 1s linear infinite;
+      pointer-events: none;
+      z-index: 10;
     }
     @keyframes spin {
       to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
     }
     .button {
       background: #007bff;
@@ -77,46 +86,52 @@
     const btn = document.getElementById('btn-gerar-png');
 
     function showSpinner() {
-      previewContainer.innerHTML = '<div class="loading-spinner"></div>';
+      const spinner = document.createElement('div');
+      spinner.className = 'loading-spinner';
+      spinner.id = 'spinner';
+      previewContainer.appendChild(spinner);
+    }
+
+    function hideSpinner() {
+      const spinner = document.getElementById('spinner');
+      if (spinner) spinner.remove();
     }
 
     function updatePreview() {
-      const html = htmlInput.value;
+      const html = htmlInput.value.trim();
       // limpa container e desabilita botão
       previewContainer.innerHTML = '';
       btn.disabled = true;
-      if (!html.trim()) return;
+
+      if (!html) return;
 
       // mostra spinner
       showSpinner();
 
-      // cria iframe
+      // cria novo iframe
       const iframe = document.createElement('iframe');
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
-      iframe.style.border = 'none';
-      // atribui TODO o HTML diretamente ao srcdoc
+      iframe.id = 'previewFrame';
       iframe.srcdoc = html;
 
-      // ao carregar, remove spinner, injeta iframe e habilita botão
+      // quando o iframe terminar de carregar tudo (CSS, Chart.js etc)
       iframe.onload = () => {
-        previewContainer.innerHTML = '';
-        previewContainer.appendChild(iframe);
+        hideSpinner();
         btn.disabled = false;
       };
 
-      // injeta iframe (spinner fica até onload)
       previewContainer.appendChild(iframe);
     }
 
-    htmlInput.addEventListener('input', updatePreview);
+    htmlInput.addEventListener('input', () => {
+      updatePreview();
+    });
 
     btn.addEventListener('click', () => {
-      const iframe = document.querySelector('#preview-container iframe');
+      const iframe = document.getElementById('previewFrame');
       if (!iframe) return;
       const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-      // desliga animações do Chart.js se existir lá dentro
+      // desliga animações do Chart.js se houver
       if (doc.defaultView.Chart) {
         doc.defaultView.Chart.defaults.animation = false;
       }
@@ -132,7 +147,7 @@
         link.href = canvas.toDataURL('image/png');
         link.click();
 
-        // restaura animações do Chart.js
+        // restaura animações
         if (doc.defaultView.Chart) {
           doc.defaultView.Chart.defaults.animation = true;
         }
