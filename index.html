@@ -44,63 +44,85 @@
             transition: background-color 0.2s;
         }
         .button:hover { background-color: #0056b3; }
-        .instructions { color: #555; text-align: center; max-width: 800px; margin-bottom: 20px;}
+        .instructions { color: #555; text-align: center; max-width: 800px; margin-bottom: 10px;}
+        .disclaimer { color: #c0392b; text-align: center; max-width: 800px; margin-bottom: 20px; font-weight: bold;}
+
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>Ferramenta: HTML para PNG</h1>
-        <p class="instructions">Cole o conteúdo da tag `&lt;body&gt;` do seu HTML abaixo. A ferramenta já carregou as bibliotecas Tailwind e Chart.js, então ela conseguirá renderizar infográficos complexos.</p>
+        <p class="instructions">Cole o documento HTML completo abaixo. A ferramenta irá extrair e renderizar o conteúdo do `&lt;body&gt;` automaticamente.</p>
+        <p class="disclaimer">Aviso: Fontes customizadas (ex: Google Fonts) no código colado podem não ser renderizadas no PNG final. O resultado usará fontes padrão.</p>
         
-        <textarea id="html-input" placeholder="Cole o código HTML aqui..."></textarea>
+        <textarea id="html-input" placeholder="Cole o código HTML completo aqui, começando com <!DOCTYPE html>..."></textarea>
 
         <h2>Preview em Tempo Real:</h2>
         <div id="preview-container">
             </div>
 
-        <button id="btn-gerar-png" class="button">Gerar PNG Perfeito</button>
+        <button id="btn-gerar-png" class="button">Gerar PNG</button>
     </div>
 
     <script>
         const htmlInput = document.getElementById('html-input');
         const previewContainer = document.getElementById('preview-container');
 
-        // Atualiza o preview em tempo real enquanto você digita
-        htmlInput.addEventListener('keyup', () => {
-            previewContainer.innerHTML = htmlInput.value;
-            // Esta parte é crucial: ela encontra e re-executa qualquer <script> que você colar.
-            // É isso que faz o Chart.js funcionar quando colado aqui.
-            Array.from(previewContainer.getElementsByTagName("script")).forEach(oldScript => {
-                const newScript = document.createElement("script");
-                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
-        });
+        // Esta é a função que agora usa o DOMParser para ser mais inteligente
+        function updatePreview() {
+            const pastedHTML = htmlInput.value;
+            if (!pastedHTML) {
+                previewContainer.innerHTML = '';
+                return;
+            }
 
-        // Função para gerar o PNG da área de preview
+            try {
+                // Usa o DOMParser para analisar a string como um documento HTML completo
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(pastedHTML, 'text/html');
+                
+                // Extrai apenas o conteúdo do <body> do HTML colado
+                const bodyContent = doc.body.innerHTML;
+
+                // Coloca o conteúdo do body na área de preview
+                previewContainer.innerHTML = bodyContent;
+
+                // Re-executa os scripts para que o Chart.js funcione
+                Array.from(previewContainer.getElementsByTagName("script")).forEach(oldScript => {
+                    const newScript = document.createElement("script");
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+            } catch (e) {
+                console.error("Erro ao analisar o HTML:", e);
+                previewContainer.innerHTML = "<p style='color: red;'>Erro: O HTML colado parece ser inválido.</p>";
+            }
+        }
+
+        htmlInput.addEventListener('input', updatePreview);
+
+        // A função de gerar o PNG permanece a mesma, pois agora ela opera no preview já corrigido
         document.getElementById('btn-gerar-png').addEventListener('click', () => {
-            console.log("Iniciando captura com lógica aprimorada...");
+            console.log("Iniciando captura...");
             
-            // Desativa animações do Chart.js para captura instantânea
             Chart.defaults.animation = false;
 
             html2canvas(previewContainer, {
                 useCORS: true,
                 allowTaint: true,
-                scale: 2 // Dobro da resolução para alta qualidade
+                scale: 2
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'meu-infografico.png';
+                link.download = 'meu-html.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 
-                // Reativa as animações para o preview continuar interativo
                 Chart.defaults.animation = true;
                 console.log("Captura concluída.");
             }).catch(err => {
-                console.error("Ocorreu um erro ao gerar o PNG:", err);
+                console.error("Ocorreu um erro:", err);
                 Chart.defaults.animation = true;
             });
         });
