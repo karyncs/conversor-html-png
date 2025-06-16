@@ -1,130 +1,161 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ferramenta HTML para PNG</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ferramenta HTML para PNG</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <style>
-        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #f0f2f5; margin: 0; }
-        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        textarea { 
-            width: 90%; 
-            max-width: 1000px;
-            min-height: 250px; 
-            margin-bottom: 20px; 
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 14px;
-        }
-        #preview-container {
-            width: 90%;
-            max-width: 1000px;
-            min-height: 100px;
-            border: 2px dashed #007bff;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-        }
-        .button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 8px;
-            margin-top: 20px;
-            transition: background-color 0.2s;
-        }
-        .button:hover { background-color: #0056b3; }
-        .instructions { color: #555; text-align: center; max-width: 800px; margin-bottom: 10px;}
-        .disclaimer { color: #c0392b; text-align: center; max-width: 800px; margin-bottom: 20px; font-weight: bold;}
-
-    </style>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+                   'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+                   'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+    }
+    .container {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 20px;
+    }
+    textarea {
+      width: 90%; max-width: 1000px; min-height: 250px;
+      margin-bottom: 20px; border: 1px solid #ccc;
+      border-radius: 8px; padding: 10px;
+      font-family: monospace; font-size: 14px;
+    }
+    #preview-container {
+      width: 90%; max-width: 1000px; min-height: 100px;
+      border: 2px dashed #007bff; padding: 20px;
+      background-color: white; border-radius: 8px;
+    }
+    .button {
+      background-color: #007bff; color: white;
+      padding: 12px 20px; font-size: 16px;
+      cursor: pointer; border: none; border-radius: 8px;
+      margin-top: 20px; transition: background-color 0.2s;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    .instructions {
+      color: #555; text-align: center;
+      max-width: 800px; margin-bottom: 10px;
+    }
+    .disclaimer {
+      color: #c0392b; text-align: center;
+      max-width: 800px; margin-bottom: 20px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Ferramenta: HTML para PNG</h1>
-        <p class="instructions">Cole o documento HTML completo abaixo. A ferramenta irá extrair e renderizar o conteúdo do `&lt;body&gt;` automaticamente.</p>
-        <p class="disclaimer">Aviso: Fontes customizadas (ex: Google Fonts) no código colado podem não ser renderizadas no PNG final. O resultado usará fontes padrão.</p>
-        
-        <textarea id="html-input" placeholder="Cole o código HTML completo aqui, começando com <!DOCTYPE html>..."></textarea>
+  <div class="container">
+    <h1>Ferramenta: HTML para PNG</h1>
+    <p class="instructions">
+      Cole o documento HTML completo abaixo. A ferramenta irá extrair e renderizar
+      o conteúdo do <code>&lt;head&gt;</code> e do <code>&lt;body&gt;</code> automaticamente.
+    </p>
+    <p class="disclaimer">
+      Aviso: Fontes customizadas (ex: Google Fonts) no código colado podem não ser
+      renderizadas no PNG final. O resultado usará fontes padrão ou as carregadas no head.
+    </p>
+    
+    <textarea id="html-input"
+              placeholder="Cole o código HTML completo aqui, começando com &lt;!DOCTYPE html&gt;..."></textarea>
 
-        <h2>Preview em Tempo Real:</h2>
-        <div id="preview-container">
-            </div>
+    <h2>Preview em Tempo Real:</h2>
+    <div id="preview-container"></div>
 
-        <button id="btn-gerar-png" class="button">Gerar PNG</button>
-    </div>
+    <button id="btn-gerar-png" class="button">Gerar PNG</button>
+  </div>
 
-    <script>
-        const htmlInput = document.getElementById('html-input');
-        const previewContainer = document.getElementById('preview-container');
+  <script>
+    const htmlInput = document.getElementById('html-input');
+    const previewContainer = document.getElementById('preview-container');
 
-        function updatePreview() {
-            const pastedHTML = htmlInput.value;
-            if (!pastedHTML) {
-                previewContainer.innerHTML = '';
-                return;
-            }
+    function updatePreview() {
+      const pastedHTML = htmlInput.value;
+      if (!pastedHTML) {
+        previewContainer.innerHTML = '';
+        return;
+      }
 
-            try {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(pastedHTML, 'text/html');
-                const bodyContent = doc.body.innerHTML;
-                previewContainer.innerHTML = bodyContent;
+      try {
+        // Parse do HTML completo
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(pastedHTML, 'text/html');
 
-                // --- A MUDANÇA CRUCIAL ESTÁ AQUI ---
-                // Adicionamos uma pequena pausa para garantir que o DOM seja atualizado
-                // antes de tentarmos executar os scripts.
-                setTimeout(() => {
-                    Array.from(previewContainer.getElementsByTagName("script")).forEach(oldScript => {
-                        const newScript = document.createElement("script");
-                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                        oldScript.parentNode.replaceChild(newScript, oldScript);
-                    });
-                }, 100); // 100 milissegundos de pausa.
+        // 1) Limpa preview
+        previewContainer.innerHTML = '';
 
-            } catch (e) {
-                console.error("Erro ao analisar o HTML:", e);
-                previewContainer.innerHTML = "<p style='color: red;'>Erro: O HTML colado parece ser inválido.</p>";
-            }
+        // 2) Clona <link> e <style> do head
+        doc.head.querySelectorAll('link[rel="stylesheet"], style').forEach(node => {
+          previewContainer.appendChild(node.cloneNode(true));
+        });
+
+        // 3) Injeta o body
+        previewContainer.insertAdjacentHTML('beforeend', doc.body.innerHTML);
+
+        // 4) Reexecuta scripts com delay maior
+        setTimeout(() => {
+          Array.from(previewContainer.getElementsByTagName('script')).forEach(oldScript => {
+            const newScript = document.createElement('script');
+            Array.from(oldScript.attributes)
+                 .forEach(attr => newScript.setAttribute(attr.name, attr.value));
+            newScript.textContent = oldScript.textContent;
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+          });
+        }, 300); // Delay de 300ms para garantir que Chart.js e outros scripts carreguem
+
+      } catch (e) {
+        console.error('Erro ao analisar o HTML:', e);
+        previewContainer.innerHTML = `
+          <p style="color: red;">
+            Erro: O HTML colado parece ser inválido.
+          </p>`;
+      }
+    }
+
+    htmlInput.addEventListener('input', updatePreview);
+
+    document.getElementById('btn-gerar-png')
+      .addEventListener('click', () => {
+        console.log('Iniciando captura...');
+
+        // Desativa animações
+        if (window.Chart) {
+          Chart.defaults.animation = false;
         }
 
-        htmlInput.addEventListener('input', updatePreview);
+        html2canvas(previewContainer, {
+          useCORS: true,
+          allowTaint: true,
+          scale: 2
+        })
+        .then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'meu-html.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
 
-        document.getElementById('btn-gerar-png').addEventListener('click', () => {
-            console.log("Iniciando captura...");
-            
-            Chart.defaults.animation = false;
-
-            html2canvas(previewContainer, {
-                useCORS: true,
-                allowTaint: true,
-                scale: 2
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'meu-html.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                Chart.defaults.animation = true;
-                console.log("Captura concluída.");
-            }).catch(err => {
-                console.error("Ocorreu um erro ao gerar o PNG:", err);
-                Chart.defaults.animation = true;
-            });
+          if (window.Chart) {
+            Chart.defaults.animation = true;
+          }
+          console.log('Captura concluída.');
+        })
+        .catch(err => {
+          console.error('Erro ao gerar o PNG:', err);
+          if (window.Chart) {
+            Chart.defaults.animation = true;
+          }
         });
-    </script>
+      });
+  </script>
 
 </body>
 </html>
