@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        body { font-family: sans-serif; background-color: #f0f2f5; }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #f0f2f5; margin: 0; }
         .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
         textarea { 
             width: 90%; 
@@ -21,16 +21,18 @@
             border-radius: 8px;
             padding: 10px;
             font-family: monospace;
+            font-size: 14px;
         }
         #preview-container {
             width: 90%;
             max-width: 1000px;
+            min-height: 100px;
             border: 2px dashed #007bff;
             padding: 20px;
             background-color: white;
             border-radius: 8px;
         }
-        button {
+        .button {
             background-color: #007bff;
             color: white;
             padding: 12px 20px;
@@ -39,23 +41,25 @@
             border: none;
             border-radius: 8px;
             margin-top: 20px;
+            transition: background-color 0.2s;
         }
-        button:hover { background-color: #0056b3; }
+        .button:hover { background-color: #0056b3; }
+        .instructions { color: #555; text-align: center; max-width: 800px; margin-bottom: 20px;}
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Ferramenta: Cole seu HTML e Gere um PNG</h1>
-        <p>Cole o conteúdo da tag `<body>` do seu HTML abaixo. As bibliotecas Tailwind e Chart.js já estão carregadas.</p>
+        <h1>Ferramenta: HTML para PNG</h1>
+        <p class="instructions">Cole o conteúdo da tag `&lt;body&gt;` do seu HTML abaixo. A ferramenta já carregou as bibliotecas Tailwind e Chart.js, então ela conseguirá renderizar infográficos complexos.</p>
         
-        <textarea id="html-input" placeholder="Cole o código HTML aqui... (Apenas o conteúdo de dentro do <body>)"></textarea>
+        <textarea id="html-input" placeholder="Cole o código HTML aqui..."></textarea>
 
-        <h2>Preview:</h2>
+        <h2>Preview em Tempo Real:</h2>
         <div id="preview-container">
             </div>
 
-        <button id="btn-gerar-png">Gerar PNG</button>
+        <button id="btn-gerar-png" class="button">Gerar PNG Perfeito</button>
     </div>
 
     <script>
@@ -65,8 +69,8 @@
         // Atualiza o preview em tempo real enquanto você digita
         htmlInput.addEventListener('keyup', () => {
             previewContainer.innerHTML = htmlInput.value;
-            // IMPORTANTE: Se o HTML colado tiver scripts, eles precisam ser re-executados
-            // Esta é uma forma simples de fazer isso.
+            // Esta parte é crucial: ela encontra e re-executa qualquer <script> que você colar.
+            // É isso que faz o Chart.js funcionar quando colado aqui.
             Array.from(previewContainer.getElementsByTagName("script")).forEach(oldScript => {
                 const newScript = document.createElement("script");
                 Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
@@ -77,7 +81,7 @@
 
         // Função para gerar o PNG da área de preview
         document.getElementById('btn-gerar-png').addEventListener('click', () => {
-            console.log("Iniciando captura...");
+            console.log("Iniciando captura com lógica aprimorada...");
             
             // Desativa animações do Chart.js para captura instantânea
             Chart.defaults.animation = false;
@@ -85,18 +89,18 @@
             html2canvas(previewContainer, {
                 useCORS: true,
                 allowTaint: true,
-                scale: 2
+                scale: 2 // Dobro da resolução para alta qualidade
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'meu-html.png';
+                link.download = 'meu-infografico.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 
-                // Reativa as animações
+                // Reativa as animações para o preview continuar interativo
                 Chart.defaults.animation = true;
                 console.log("Captura concluída.");
             }).catch(err => {
-                console.error("Erro:", err);
+                console.error("Ocorreu um erro ao gerar o PNG:", err);
                 Chart.defaults.animation = true;
             });
         });
