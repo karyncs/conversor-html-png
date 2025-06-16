@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tool HTML → PNG</title>
+  <title>Ferramenta HTML → PNG</title>
   <!-- html2canvas no host -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
@@ -12,20 +12,37 @@
       background-color: #f0f2f5;
       margin: 0;
       padding: 20px;
+      text-align: center;
     }
     textarea {
-      width: 100%;
+      width: 90%;
+      max-width: 800px;
       height: 200px;
       font-family: monospace;
       font-size: 14px;
       margin-bottom: 10px;
     }
     #preview-container {
-      width: 100%;
-      height: 600px;
+      width: 90%;
+      max-width: 800px;
+      min-height: 400px;
       border: 2px dashed #007bff;
-      margin-bottom: 10px;
+      margin: 0 auto 10px;
       position: relative;
+      background: white;
+    }
+    .loading-spinner {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px; height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
     }
     .button {
       background: #007bff;
@@ -35,6 +52,7 @@
       border-radius: 4px;
       cursor: pointer;
       transition: opacity 0.2s;
+      font-size: 16px;
     }
     .button:disabled {
       opacity: 0.5;
@@ -43,10 +61,11 @@
   </style>
 </head>
 <body>
-  <h1>Tool: HTML → PNG</h1>
+  <h1>Ferramenta: HTML → PNG</h1>
+
   <textarea
     id="html-input"
-    placeholder="Paste here your HTML // Cole aqui seu HTML completo (incluindo todo o <head> e <body>)…"
+    placeholder="Cole aqui seu HTML completo (incluindo <head> e <body>)…"
   ></textarea>
 
   <div id="preview-container"></div>
@@ -57,40 +76,47 @@
     const previewContainer = document.getElementById('preview-container');
     const btn = document.getElementById('btn-gerar-png');
 
+    function showSpinner() {
+      previewContainer.innerHTML = '<div class="loading-spinner"></div>';
+    }
+
     function updatePreview() {
       const html = htmlInput.value;
-      // limpa e impede novo clique até reload do iframe
+      // limpa container e desabilita botão
       previewContainer.innerHTML = '';
       btn.disabled = true;
-
       if (!html.trim()) return;
 
-      // serializa TODO o HTML (com head+body) para srcdoc
-      const srcdoc = JSON.stringify(html);
+      // mostra spinner
+      showSpinner();
 
-      previewContainer.innerHTML = `
-        <iframe
-          id="previewFrame"
-          style="width:100%; height:100%; border:none"
-          srcdoc=${srcdoc}>
-        </iframe>
-      `;
+      // cria iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      // atribui TODO o HTML diretamente ao srcdoc
+      iframe.srcdoc = html;
 
-      // só habilita o botão quando tudo (CSS, Chart.js, etc.) tiver carregado
-      const iframe = previewContainer.querySelector('iframe');
-      iframe.addEventListener('load', () => {
+      // ao carregar, remove spinner, injeta iframe e habilita botão
+      iframe.onload = () => {
+        previewContainer.innerHTML = '';
+        previewContainer.appendChild(iframe);
         btn.disabled = false;
-      });
+      };
+
+      // injeta iframe (spinner fica até onload)
+      previewContainer.appendChild(iframe);
     }
 
     htmlInput.addEventListener('input', updatePreview);
 
     btn.addEventListener('click', () => {
-      const iframe = document.getElementById('previewFrame');
+      const iframe = document.querySelector('#preview-container iframe');
       if (!iframe) return;
       const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-      // desliga animações do Chart.js se estiver lá dentro
+      // desliga animações do Chart.js se existir lá dentro
       if (doc.defaultView.Chart) {
         doc.defaultView.Chart.defaults.animation = false;
       }
@@ -106,7 +132,7 @@
         link.href = canvas.toDataURL('image/png');
         link.click();
 
-        // restaura animações
+        // restaura animações do Chart.js
         if (doc.defaultView.Chart) {
           doc.defaultView.Chart.defaults.animation = true;
         }
