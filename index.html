@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML para PDF/PNG</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        textarea { width: 80%; min-height: 200px; margin-bottom: 20px; }
+        #render-area { border: 1px solid #ccc; padding: 15px; width: 80%; margin-bottom: 20px; }
+        button { padding: 10px 15px; font-size: 16px; cursor: pointer; margin: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>Conversor de HTML</h1>
+    <p>Cole seu código HTML abaixo. O conteúdo será renderizado na caixa cinza.</p>
+
+    <textarea id="html-input" placeholder="Cole seu código HTML aqui..."></textarea>
+    
+    <h2>Preview do Infográfico:</h2>
+    <div id="render-area">
+        </div>
+
+    <div class="actions">
+        <button id="btn-gerar-png">Gerar PNG</button>
+        <button id="btn-gerar-pdf">Gerar PDF</button>
+    </div>
+
+    <script>
+        const htmlInput = document.getElementById('html-input');
+        const renderArea = document.getElementById('render-area');
+
+        // Atualiza o preview em tempo real
+        htmlInput.addEventListener('keyup', () => {
+            renderArea.innerHTML = htmlInput.value;
+        });
+
+        // Lógica para gerar PNG
+        document.getElementById('btn-gerar-png').addEventListener('click', () => {
+            html2canvas(renderArea).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'infografico.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        });
+
+        // Lógica para gerar PDF
+        document.getElementById('btn-gerar-pdf').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+
+            html2canvas(renderArea, { scale: 2 }).then(canvas => { // Aumentar a escala melhora a qualidade
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save('infografico.pdf');
+            });
+        });
+    </script>
+</body>
+</html>
