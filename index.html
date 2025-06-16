@@ -3,66 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML para PDF/PNG</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <title>Ferramenta HTML para PNG</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        textarea { width: 80%; min-height: 200px; margin-bottom: 20px; }
-        #render-area { border: 1px solid #ccc; padding: 15px; width: 80%; margin-bottom: 20px; }
-        button { padding: 10px 15px; font-size: 16px; cursor: pointer; margin: 5px; }
+        body { font-family: sans-serif; background-color: #f0f2f5; }
+        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        textarea { 
+            width: 90%; 
+            max-width: 1000px;
+            min-height: 250px; 
+            margin-bottom: 20px; 
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+        }
+        #preview-container {
+            width: 90%;
+            max-width: 1000px;
+            border: 2px dashed #007bff;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        button:hover { background-color: #0056b3; }
     </style>
 </head>
 <body>
 
-    <h1>Conversor de HTML</h1>
-    <p>Cole seu código HTML abaixo. O conteúdo será renderizado na caixa cinza.</p>
+    <div class="container">
+        <h1>Ferramenta: Cole seu HTML e Gere um PNG</h1>
+        <p>Cole o conteúdo da tag `<body>` do seu HTML abaixo. As bibliotecas Tailwind e Chart.js já estão carregadas.</p>
+        
+        <textarea id="html-input" placeholder="Cole o código HTML aqui... (Apenas o conteúdo de dentro do <body>)"></textarea>
 
-    <textarea id="html-input" placeholder="Cole seu código HTML aqui..."></textarea>
-    
-    <h2>Preview do Infográfico:</h2>
-    <div id="render-area">
-        </div>
+        <h2>Preview:</h2>
+        <div id="preview-container">
+            </div>
 
-    <div class="actions">
         <button id="btn-gerar-png">Gerar PNG</button>
-        <button id="btn-gerar-pdf">Gerar PDF</button>
     </div>
 
     <script>
         const htmlInput = document.getElementById('html-input');
-        const renderArea = document.getElementById('render-area');
+        const previewContainer = document.getElementById('preview-container');
 
-        // Atualiza o preview em tempo real
+        // Atualiza o preview em tempo real enquanto você digita
         htmlInput.addEventListener('keyup', () => {
-            renderArea.innerHTML = htmlInput.value;
-        });
-
-        // Lógica para gerar PNG
-        document.getElementById('btn-gerar-png').addEventListener('click', () => {
-            html2canvas(renderArea).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'infografico.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+            previewContainer.innerHTML = htmlInput.value;
+            // IMPORTANTE: Se o HTML colado tiver scripts, eles precisam ser re-executados
+            // Esta é uma forma simples de fazer isso.
+            Array.from(previewContainer.getElementsByTagName("script")).forEach(oldScript => {
+                const newScript = document.createElement("script");
+                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                oldScript.parentNode.replaceChild(newScript, oldScript);
             });
         });
 
-        // Lógica para gerar PDF
-        document.getElementById('btn-gerar-pdf').addEventListener('click', () => {
-            const { jsPDF } = window.jspdf;
+        // Função para gerar o PNG da área de preview
+        document.getElementById('btn-gerar-png').addEventListener('click', () => {
+            console.log("Iniciando captura...");
+            
+            // Desativa animações do Chart.js para captura instantânea
+            Chart.defaults.animation = false;
 
-            html2canvas(renderArea, { scale: 2 }).then(canvas => { // Aumentar a escala melhora a qualidade
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
-                });
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                pdf.save('infografico.pdf');
+            html2canvas(previewContainer, {
+                useCORS: true,
+                allowTaint: true,
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'meu-html.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // Reativa as animações
+                Chart.defaults.animation = true;
+                console.log("Captura concluída.");
+            }).catch(err => {
+                console.error("Erro:", err);
+                Chart.defaults.animation = true;
             });
         });
     </script>
+
 </body>
 </html>
