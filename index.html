@@ -69,7 +69,6 @@
         const htmlInput = document.getElementById('html-input');
         const previewContainer = document.getElementById('preview-container');
 
-        // Esta é a função que agora usa o DOMParser para ser mais inteligente
         function updatePreview() {
             const pastedHTML = htmlInput.value;
             if (!pastedHTML) {
@@ -78,23 +77,23 @@
             }
 
             try {
-                // Usa o DOMParser para analisar a string como um documento HTML completo
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(pastedHTML, 'text/html');
-                
-                // Extrai apenas o conteúdo do <body> do HTML colado
                 const bodyContent = doc.body.innerHTML;
-
-                // Coloca o conteúdo do body na área de preview
                 previewContainer.innerHTML = bodyContent;
 
-                // Re-executa os scripts para que o Chart.js funcione
-                Array.from(previewContainer.getElementsByTagName("script")).forEach(oldScript => {
-                    const newScript = document.createElement("script");
-                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                    oldScript.parentNode.replaceChild(newScript, oldScript);
-                });
+                // --- A MUDANÇA CRUCIAL ESTÁ AQUI ---
+                // Adicionamos uma pequena pausa para garantir que o DOM seja atualizado
+                // antes de tentarmos executar os scripts.
+                setTimeout(() => {
+                    Array.from(previewContainer.getElementsByTagName("script")).forEach(oldScript => {
+                        const newScript = document.createElement("script");
+                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+                }, 100); // 100 milissegundos de pausa.
+
             } catch (e) {
                 console.error("Erro ao analisar o HTML:", e);
                 previewContainer.innerHTML = "<p style='color: red;'>Erro: O HTML colado parece ser inválido.</p>";
@@ -103,7 +102,6 @@
 
         htmlInput.addEventListener('input', updatePreview);
 
-        // A função de gerar o PNG permanece a mesma, pois agora ela opera no preview já corrigido
         document.getElementById('btn-gerar-png').addEventListener('click', () => {
             console.log("Iniciando captura...");
             
@@ -122,7 +120,7 @@
                 Chart.defaults.animation = true;
                 console.log("Captura concluída.");
             }).catch(err => {
-                console.error("Ocorreu um erro:", err);
+                console.error("Ocorreu um erro ao gerar o PNG:", err);
                 Chart.defaults.animation = true;
             });
         });
