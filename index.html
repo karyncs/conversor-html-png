@@ -1,154 +1,160 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tool: HTML → PNG</title>
-
-  <!-- html2canvas -->
+  <title>Infographic Snapshot Maker: HTML → PNG</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: system-ui, sans-serif;
-      background-color: #f0f2f5;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
+      font-family: 'Poppins', sans-serif;
+      background: #F9F8F8;
       color: #333;
+      text-align: center;
+      padding: 20px;
     }
-
-    h1 { margin-bottom: 0.2em; }
-    .subtitle { font-size: 0.9em; color: #555; margin-bottom: 1em; }
-
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.2em;
+      color: #C27C7C;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 1em;
+    }
+    .instructions {
+      max-width: 800px;
+      margin: 1em auto 2em;
+      background: #FFF;
+      border: 1px solid #E2DBDB;
+      border-radius: 8px;
+      padding: 1em 1.5em;
+      text-align: left;
+      line-height: 1.4;
+      color: #444;
+    }
+    .instructions h2 {
+      margin-bottom: 0.5em;
+      color: #C27C7C;
+    }
     textarea {
       width: 90%;
       max-width: 800px;
-      height: 200px;
+      height: 180px;
+      padding: 12px;
+      border: 1px solid #E8DCDC;
+      border-radius: 8px;
       font-family: monospace;
-      font-size: 14px;
-      margin-bottom: 10px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      font-size: 0.9rem;
+      background: #FFF;
+      margin-bottom: 1em;
       resize: vertical;
     }
-
+    textarea:focus {
+      outline: none;
+      border-color: #C27C7C;
+      box-shadow: 0 0 6px rgba(194,124,124,0.2);
+    }
     #preview-container {
       width: 90%;
       max-width: 800px;
-      min-height: 300px;
-      max-height: 70vh;
-      border: 2px dashed #007bff;
-      margin: 10px auto;
+      background: #FFF;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin: 0 auto 1.5em;
       position: relative;
-      background: white;
       overflow: hidden;
-      padding: 10px;
+      padding: 8px;
     }
-
+    iframe {
+      width: 100%;
+      border: none;
+      border-radius: 4px;
+      /* no fixed height here */
+    }
     .loading-spinner {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       width: 40px; height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007bff;
+      border: 4px solid #F2EAEA;
+      border-top: 4px solid #C27C7C;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      pointer-events: none;
       z-index: 10;
     }
     @keyframes spin {
       to { transform: translate(-50%, -50%) rotate(360deg); }
     }
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      z-index: 1;
-    }
-
     .button {
-      background: #007bff;
-      color: #fff;
+      background: linear-gradient(135deg, #ECAFAF, #C27C7C);
+      color: #FFF;
       border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 1rem;
       cursor: pointer;
-      transition: opacity 0.2s;
-      font-size: 16px;
-      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(194,124,124,0.3);
+      transition: transform .15s, box-shadow .15s;
+      margin-bottom: 2em;
+    }
+    .button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(194,124,124,0.4);
     }
     .button:disabled {
-      opacity: 0.5;
+      opacity: 0.6;
       cursor: not-allowed;
     }
-
     .footer {
-      margin-top: 40px;
-      font-size: 0.9em;
-      color: #666;
+      font-size: 0.8rem;
+      color: #777;
+      padding: 1em 0;
+      border-top: 1px solid #E2DBDB;
+      margin-top: 2em;
     }
     .footer a {
-      color: #007bff;
+      color: #C27C7C;
       text-decoration: none;
+      font-weight: 600;
     }
     .footer a:hover {
       text-decoration: underline;
     }
-
-    .instructions {
-      text-align: left;
-      max-width: 800px;
-      margin: 0 auto 20px;
-      font-size: 0.9em;
-      line-height: 1.4;
-      background: #fff;
-      padding: 10px 15px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-    }
-    .instructions h2 {
-      margin-top: 0;
-    }
   </style>
 </head>
 <body>
-  <h1>Tool: HTML → PNG</h1>
+  <h1>Print your Gemini Infographic</br> HTML → PNG</h1>
   <div class="subtitle">
-    Paste your full HTML below
+    Paste full HTML (including &lt;head&gt; &amp; &lt;body&gt;)…
   </div>
 
   <div class="instructions">
-    <h2>How to use it:</h2>
+    <h2>How to use:</h2>
     <ol>
-      <li>Go to the Infographic generated by Gemini</li>
-      <li>Click on “Code”</li>
-      <li>Click on “Share”</li>
-      <li>Click on “Copy Contents”</li>
-      <li>Open this tool</li>
-      <li>Paste into the box (Ctrl+V or right-click)</li>
-      <li>Click on “Gerate PNG” button (it may take a second)</li>
-      <li>Check your downloads folder</li>
+      <li>Go to your Gemini infographic.</li>
+      <li>Click “Code” → “Share” → “Copy Contents”.</li>
+      <li>Return here and paste (Ctrl+V or right-click).</li>
+      <li>Click <strong>Generate PNG</strong> (may take a second).</li>
+      <li>Check your downloads folder for the image.</li>
     </ol>
   </div>
 
-  <textarea
-    id="html-input"
-    placeholder="Paste your full HTML here (including &lt;head&gt; &amp; &lt;body&gt;)…"
-  ></textarea>
+  <textarea id="html-input"
+    placeholder="Paste full HTML (head & body)…"></textarea>
 
   <div id="preview-container"></div>
   <button id="btn-gerar-png" class="button" disabled>
-    Gerar PNG / Generate PNG
+    Generate PNG
   </button>
 
   <div class="footer">
-    Made with love <del>and AI</del> by Karyn Serratine.<br/>
+    Made with ❤️ by Karyn Serratine.<br/>
     <a href="https://buymeacoffee.com/karyncs" target="_blank">
-      ☕ Buy me a coffee
+      ☕ Buy me a coffee?
     </a>
   </div>
 
@@ -159,16 +165,15 @@
 
     function showSpinner() {
       if (!document.getElementById('spinner')) {
-        const spinner = document.createElement('div');
-        spinner.className = 'loading-spinner';
-        spinner.id = 'spinner';
-        previewContainer.appendChild(spinner);
+        const s = document.createElement('div');
+        s.id = 'spinner';
+        s.className = 'loading-spinner';
+        previewContainer.appendChild(s);
       }
     }
-
     function hideSpinner() {
-      const spinner = document.getElementById('spinner');
-      if (spinner) spinner.remove();
+      const s = document.getElementById('spinner');
+      if (s) s.remove();
     }
 
     function updatePreview() {
@@ -176,17 +181,20 @@
       previewContainer.innerHTML = '';
       btn.disabled = true;
       if (!html) return;
-
       showSpinner();
-
       const iframe = document.createElement('iframe');
       iframe.id = 'previewFrame';
       iframe.srcdoc = html;
       iframe.onload = () => {
         hideSpinner();
+        // auto-resize to content height
+        try {
+          const doc = iframe.contentDocument;
+          const h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+          iframe.style.height = h + 'px';
+        } catch {}
         btn.disabled = false;
       };
-
       previewContainer.appendChild(iframe);
     }
 
@@ -196,26 +204,20 @@
       const iframe = document.getElementById('previewFrame');
       if (!iframe) return;
       const doc = iframe.contentDocument || iframe.contentWindow.document;
-
       if (doc.defaultView.Chart) {
         doc.defaultView.Chart.defaults.animation = false;
       }
-
-      html2canvas(doc.body, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 2
-      })
+      html2canvas(doc.body, { useCORS:true, allowTaint:true, scale:2 })
       .then(canvas => {
         const link = document.createElement('a');
-        link.download = 'captura.png';
+        link.download = 'snapshot.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
         if (doc.defaultView.Chart) {
           doc.defaultView.Chart.defaults.animation = true;
         }
       })
-      .catch(err => console.error('Erro ao gerar PNG:', err));
+      .catch(console.error);
     });
   </script>
 </body>
