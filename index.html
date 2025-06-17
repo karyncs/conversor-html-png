@@ -166,7 +166,7 @@
   </button>
 
   <div class="footer">
-    Made with care by Karyn Serratine.<br>
+    Made with ❤️ <del>and AI</del> by Karyn Serratine.<br>
     <a href="https://buymeacoffee.com/karyncs" target="_blank">
       ☕ Buy me a coffee?
     </a>
@@ -269,57 +269,46 @@
       });
     });
 
-    // PDF download (image-based)
+    // PDF download (exact canvas size)
     pdfBtn.addEventListener('click', () => {
       const iframe = document.getElementById('previewFrame');
       if (!iframe) return;
       const doc = iframe.contentDocument;
 
-      if (doc.fonts) console.log('Before load, font status:', doc.fonts.status);
+      // normalize margins/padding & copy background
+      doc.documentElement.style.margin = doc.body.style.margin = '0';
+      doc.documentElement.style.padding = doc.body.style.padding = '0';
+      const bg = getComputedStyle(doc.body).backgroundColor;
+      doc.documentElement.style.backgroundColor = bg || '#fff';
 
-      const fontReady = doc.fonts
-        ? Promise.all([
-            doc.fonts.load('400 1em Inter'),
-            doc.fonts.load('600 1em Inter'),
-            doc.fonts.load('700 1em Inter'),
-            doc.fonts.load('900 1em Inter')
-          ])
-        : Promise.resolve();
+      html2canvas(doc.documentElement, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+        windowWidth:  doc.documentElement.scrollWidth,
+        windowHeight: doc.documentElement.scrollHeight
+      })
+      .then(canvas => {
+        // measure in pixels
+        const pxW = canvas.width;
+        const pxH = canvas.height;
+        // convert px→pt (1pt = 1/72in, 1in = 96px)
+        const ptW = pxW * 72 / 96;
+        const ptH = pxH * 72 / 96;
 
-      fontReady.then(async () => {
-        console.log('▶ Inter weights loaded, capturing PDF');
-
-        // reset margins/padding & replicate bg
-        doc.documentElement.style.margin = doc.body.style.margin = '0';
-        doc.documentElement.style.padding = doc.body.style.padding = '0';
-        const bg = getComputedStyle(doc.body).backgroundColor;
-        doc.documentElement.style.backgroundColor = bg || '#fff';
-
-        await new Promise(r => setTimeout(r, 800));
-        requestAnimationFrame(async () => {
-          const canvas = await html2canvas(doc.documentElement, {
-            useCORS: true,
-            allowTaint: true,
-            scale: 2,
-            windowWidth:  doc.documentElement.scrollWidth,
-            windowHeight: doc.documentElement.scrollHeight
-          });
-          console.log('✔ PDF canvas ready');
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' });
-          const pageW = pdf.internal.pageSize.getWidth();
-          const pageH = pdf.internal.pageSize.getHeight();
-          const props = pdf.getImageProperties(imgData);
-          let w = pageW - 40;
-          let h = (props.height * w) / props.width;
-          if (h > pageH - 40) {
-            h = pageH - 40;
-            w = (props.width * h) / props.height;
-          }
-          pdf.addImage(imgData, 'PNG', 20, 20, w, h);
-          pdf.save('snapshot.pdf');
+        // create PDF with exact page size
+        const pdf = new jsPDF({
+          unit: 'pt',
+          format: [ ptW, ptH ],
+          orientation: ptW > ptH ? 'landscape' : 'portrait'
         });
-      });
+
+        // draw the image full‐bleed
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 0, 0, ptW, ptH);
+        pdf.save('snapshot.pdf');
+      })
+      .catch(console.error);
     });
   </script>
 </body>
