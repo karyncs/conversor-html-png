@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Infograph Snapshot Maker: HTML → PNG & PDF</title>
+  <title>Infographic Snapshot Maker: HTML → PNG & PDF</title>
 
-  <!-- Load the Inter font weights used in your infograph: -->
+  <!-- Load the Inter font weights used in your infographic -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
   <!-- Poppins for UI -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -137,7 +137,7 @@
 </head>
 <body>
 
-  <h1>Infograph Snapshot Maker<br>HTML → PNG &amp; PDF</h1>
+  <h1>Infographic Snapshot Maker<br>HTML → PNG &amp; PDF</h1>
   <div class="subtitle">
     Paste full HTML here (including &lt;head&gt; &amp; &lt;body&gt;)…
   </div>
@@ -153,20 +153,15 @@
     </ol>
   </div>
 
-  <textarea id="html-input"
-    placeholder="Paste full HTML (head &amp; body)…"></textarea>
+  <textarea id="html-input" placeholder="Paste full HTML (head &amp; body)…"></textarea>
 
   <div id="preview-container"></div>
 
-  <button id="btn-gerar-png" class="button" disabled>
-    Generate PNG
-  </button>
-  <button id="btn-gerar-pdf" class="button" disabled>
-    Generate PDF
-  </button>
+  <button id="btn-gerar-png" class="button" disabled>Generate PNG</button>
+  <button id="btn-gerar-pdf" class="button" disabled>Generate PDF</button>
 
   <div class="footer">
-    Made with ❤️ <del>and AI</del> by Karyn Serratine.<br>
+    Made with ❤️ and AI by Karyn Serratine.<br>
     <a href="https://buymeacoffee.com/karyncs" target="_blank">
       ☕ Buy me a coffee?
     </a>
@@ -198,74 +193,78 @@
       pngBtn.disabled = pdfBtn.disabled = true;
       if (!html) return;
       showSpinner();
+
+      // inject Inter into preview so spacing is correct
       const iframe = document.createElement('iframe');
       iframe.id = 'previewFrame';
-      iframe.srcdoc = html;
+      const interLink = `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">`;
+      iframe.srcdoc = `<!DOCTYPE html><html><head>${interLink}</head><body>${html}</body></html>`;
+
       iframe.onload = () => {
         hideSpinner();
         try {
           const doc = iframe.contentDocument;
-          const h = Math.max(
-            doc.body.scrollHeight,
-            doc.documentElement.scrollHeight
-          );
-          iframe.style.height = h + 'px';
-        } catch {}
-        pngBtn.disabled = pdfBtn.disabled = false;
+          // wait for Inter to load
+          const ready = doc.fonts
+            ? Promise.all([
+                doc.fonts.load('400 1em Inter'),
+                doc.fonts.load('600 1em Inter'),
+                doc.fonts.load('700 1em Inter'),
+                doc.fonts.load('900 1em Inter'),
+              ])
+            : Promise.resolve();
+          ready.then(() => {
+            const h = Math.max(
+              doc.body.scrollHeight,
+              doc.documentElement.scrollHeight
+            );
+            iframe.style.height = h + 'px';
+            pngBtn.disabled = pdfBtn.disabled = false;
+          });
+        } catch {
+          pngBtn.disabled = pdfBtn.disabled = false;
+        }
       };
       previewContainer.appendChild(iframe);
     }
 
     htmlInput.addEventListener('input', updatePreview);
 
-    // PNG download
+    // PNG download (bitmap)
     pngBtn.addEventListener('click', () => {
       const iframe = document.getElementById('previewFrame');
       if (!iframe) return;
       const doc = iframe.contentDocument;
 
-      // DEBUG: initial font status
-      if (doc.fonts) console.log('Before load, font status:', doc.fonts.status);
+      // normalize & copy bg
+      doc.documentElement.style.margin = doc.body.style.margin = '0';
+      doc.documentElement.style.padding = doc.body.style.padding = '0';
+      const bg = getComputedStyle(doc.body).backgroundColor;
+      doc.documentElement.style.backgroundColor = bg || '#fff';
 
-      // load every Inter weight your infographic uses
-      const fontReady = doc.fonts
+      // wait for Inter before canvas
+      const ready = doc.fonts
         ? Promise.all([
             doc.fonts.load('400 1em Inter'),
             doc.fonts.load('600 1em Inter'),
             doc.fonts.load('700 1em Inter'),
-            doc.fonts.load('900 1em Inter')
+            doc.fonts.load('900 1em Inter'),
           ])
         : Promise.resolve();
 
-      fontReady.then(() => {
-        console.log('▶ Inter weights loaded, capturing PNG');
-
-        // zero margins/padding & replicate body background
-        doc.documentElement.style.margin = doc.body.style.margin = '0';
-        doc.documentElement.style.padding = doc.body.style.padding = '0';
-        const bg = getComputedStyle(doc.body).backgroundColor;
-        doc.documentElement.style.backgroundColor = bg || '#fff';
-
-        // give a moment for final layout, then grab
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            html2canvas(doc.documentElement, {
-              useCORS: true,
-              allowTaint: true,
-              scale: 2,
-              windowWidth:  doc.documentElement.scrollWidth,
-              windowHeight: doc.documentElement.scrollHeight
-            })
-            .then(canvas => {
-              console.log('✔ PNG canvas ready');
-              const link = document.createElement('a');
-              link.download = 'snapshot.png';
-              link.href = canvas.toDataURL('image/png');
-              link.click();
-            })
-            .catch(err => console.error('✖ html2canvas error:', err));
-          });
-        }, 800);
+      ready.then(() => {
+        html2canvas(doc.documentElement, {
+          useCORS: true,
+          allowTaint: true,
+          scale: 2,
+          windowWidth: doc.documentElement.scrollWidth,
+          windowHeight: doc.documentElement.scrollHeight
+        }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'snapshot.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        });
       });
     });
 
@@ -275,40 +274,43 @@
       if (!iframe) return;
       const doc = iframe.contentDocument;
 
-      // normalize margins/padding & copy background
+      // normalize & copy bg
       doc.documentElement.style.margin = doc.body.style.margin = '0';
       doc.documentElement.style.padding = doc.body.style.padding = '0';
       const bg = getComputedStyle(doc.body).backgroundColor;
       doc.documentElement.style.backgroundColor = bg || '#fff';
 
-      html2canvas(doc.documentElement, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 2,
-        windowWidth:  doc.documentElement.scrollWidth,
-        windowHeight: doc.documentElement.scrollHeight
-      })
-      .then(canvas => {
-        // measure in pixels
-        const pxW = canvas.width;
-        const pxH = canvas.height;
-        // convert px→pt (1pt = 1/72in, 1in = 96px)
-        const ptW = pxW * 72 / 96;
-        const ptH = pxH * 72 / 96;
+      // wait for Inter before canvas
+      const ready = doc.fonts
+        ? Promise.all([
+            doc.fonts.load('400 1em Inter'),
+            doc.fonts.load('600 1em Inter'),
+            doc.fonts.load('700 1em Inter'),
+            doc.fonts.load('900 1em Inter'),
+          ])
+        : Promise.resolve();
 
-        // create PDF with exact page size
-        const pdf = new jsPDF({
-          unit: 'pt',
-          format: [ ptW, ptH ],
-          orientation: ptW > ptH ? 'landscape' : 'portrait'
+      ready.then(() => {
+        html2canvas(doc.documentElement, {
+          useCORS: true,
+          allowTaint: true,
+          scale: 2,
+          windowWidth: doc.documentElement.scrollWidth,
+          windowHeight: doc.documentElement.scrollHeight
+        })
+        .then(canvas => {
+          const pxW = canvas.width, pxH = canvas.height;
+          const ptW = pxW * 72 / 96, ptH = pxH * 72 / 96;
+          const pdf = new jsPDF({
+            unit: 'pt',
+            format: [ptW, ptH],
+            orientation: ptW > ptH ? 'landscape' : 'portrait'
+          });
+          const imgData = canvas.toDataURL('image/png');
+          pdf.addImage(imgData, 'PNG', 0, 0, ptW, ptH);
+          pdf.save('snapshot.pdf');
         });
-
-        // draw the image full‐bleed
-        const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, ptW, ptH);
-        pdf.save('snapshot.pdf');
-      })
-      .catch(console.error);
+      });
     });
   </script>
 </body>
